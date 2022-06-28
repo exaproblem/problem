@@ -1,0 +1,287 @@
+1) создать wpf .net с названием-фамилией
+создать папки common, databases, resources
+
+2) подключить модель ado.net Model в папку databases
+имя сервера в sql самое верхнее
+проверка подлинности скл
+имя базы данных 19ip16
+
+Entities
+
+выбрать все таблицы
+
+3) класс Instance.cs в папке databases	
+class Instance
+    {
+        private static Entities entities;
+        public static Entities GetContext()
+        {
+            if (entities == null) entities = new Entities();
+            return entities;
+        }
+    }
+2) заполнить данные для sql (продукттипа, продукт, продуктматериал, материал, материалтип)!!!!!!!!!
+4)нарисовать мэйнвиндов
+
+4.1. после ссылок вставить
+
+<Window.Resources>
+        <ResourceDictionary>
+            <common:ConventerImage x:Key="imageConverter"/>
+            <common:ConventerType x:Key="typeNameConverter"/>
+            <common:ConventerArticle x:Key="articleConverter"/>
+            <common:ConventerMaterial x:Key="materialConverter"/>
+            <common:ConventerCost x:Key="costConverter"/>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="50"></ColumnDefinition>
+            <ColumnDefinition></ColumnDefinition>
+            <ColumnDefinition Width="50"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="100"></RowDefinition>
+            <RowDefinition></RowDefinition>
+            <RowDefinition Height="50"></RowDefinition>
+        </Grid.RowDefinitions>
+        <ListBox x:Name="listbox" Grid.Row="1" Grid.Column="1">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                            <ColumnDefinition Width="100"></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <Image x:Name="image" Grid.RowSpan="3" Grid.Column="0" Margin="5"
+                               Source="{Binding Converter={StaticResource imageConverter}}"></Image>
+                        <TextBlock x:Name="typeName" Grid.Column="1" Grid.Row="0" Margin="5"
+                                   Text="{Binding Converter={StaticResource typeNameConverter}}"></TextBlock>
+                        <TextBlock x:Name="article" Grid.Column="1" Grid.Row="1" Margin="5"
+                                   Text="{Binding Converter={StaticResource articleConverter}}"></TextBlock>
+                        <TextBlock x:Name="material" Grid.Column="1" Grid.Row="2" Margin="5"
+                                   Text="{Binding Converter={StaticResource materialConverter}}"></TextBlock>
+                        <TextBlock x:Name="cost" Grid.Column="2" Margin="5"
+                                   Text="{Binding Converter={StaticResource costConverter}}"></TextBlock>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <StackPanel Orientation="Horizontal" Grid.Column="1">
+            <TextBox x:Name="poisk" 
+                     VerticalAlignment="Center" HorizontalAlignment="Right"  
+                     Margin="10,0" Width="200"
+                     TextChanged="poisk_TextChanged">
+                
+            </TextBox>
+            <ComboBox x:Name="sortComboBox" 
+                      VerticalAlignment="Center" HorizontalAlignment="Right"  
+                      Width="120" Grid.Column="1" Margin="10,0"
+                      SelectionChanged="sortComboBox_SelectionChanged">
+            </ComboBox>
+            <ComboBox x:Name="filterComboBox"
+                  VerticalAlignment="Center" HorizontalAlignment="Right"  
+                  Width="120" Grid.Column="1" Margin="10,0"
+                  SelectionChanged="filterComboBox_SelectionChanged">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Title}"></TextBlock>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </StackPanel>
+    </Grid>
+</Window>
+
+4.2. удалить у верхнего текста filterComboBox_SelectionChanged, sortComboBox_SelectionChanged, poisk_TextChanged и самостоятельно создать обработчики событий
+
+5) в папку resources добавить картинки 
+выделить на компе картинку и прямо перенести в папку ресурсы в вижуал студио
+переименовать картинки так, как они названы в скл
+
+картинку-заглушку переименовать в picture.png !!!
+
+правой кнопкой по проекту(своей фамилии справа)-свойства - 
+слева будет меню и там выбрать раздел ресурсы - сверху выбрать "добавить ресурс"-добавить существующий
+перейти по пути, где лежит проект C:\Users\Анастасия\source\repos\demoExam\resources
+и выбрать все картинки - открыть
+
+6)в мэйнвиндов ксамл цс
+using Leonteva.databases;
+
+public MainWindow()
+        {
+            InitializeComponent();
+            filterComboBox.ItemsSource = Instance.GetContext().ProductType.ToList().Prepend(new ProductType() { Title = "выберите тип" });
+            filterComboBox.SelectedIndex = 0;
+
+            sortComboBox.Items.Add("нет сортировки");
+            sortComboBox.Items.Add("по убыванию");
+            sortComboBox.Items.Add("по возрастанию");
+            sortComboBox.SelectedIndex = 0;
+
+            updateData();
+        }
+
+        private void updateData()
+        {
+            var listBoxList = Instance.GetContext().Product.ToList();
+
+            // поиск
+            if (!string.IsNullOrEmpty(poisk.Text))
+                listBoxList = listBoxList.Where(p => p.Title.Trim().Contains(poisk.Text)).ToList();
+
+            // фильтрация
+            if (filterComboBox.SelectedIndex > 0)
+                listBoxList = listBoxList.Where((p) => p.ProductTypeID.Equals(filterComboBox.SelectedIndex)).ToList();
+
+            // sort
+            switch (sortComboBox.SelectedIndex)
+            {
+                case 0:
+                    break;
+                case 1:
+                    listBoxList = listBoxList.OrderBy(p => p.Title).ToList();
+                    break;
+                case 2:
+                    listBoxList = listBoxList.OrderByDescending(p => p.Title).ToList();
+                    break;
+            }
+
+            // присвоим модифицированные временные списки нашим элементам вывода
+            listbox.ItemsSource = listBoxList;
+        }
+
+        private void sortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            updateData();
+        }
+
+        private void filterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            updateData();
+        }
+
+        private void poisk_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            updateData();
+        }
+
+7)создать в папке common Converter.cs
+
+using demoExam.databases;
+using System;
+using System.Globalization;
+using System.Linq;
+using System.Windows.Data;
+using System.Windows.Media.Imaging;
+
+namespace demoExam.common
+{
+    [ValueConversion(typeof(Product), typeof(string))]
+    public class ConventerImage : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            Product product = value as Product;
+            try 
+            {
+                if (product == null || product.Image == string.Empty)
+                    return new BitmapImage(new Uri(System.IO.Path.GetFullPath("../../resources/picture.png")));
+                return new BitmapImage(new Uri(System.IO.Path.GetFullPath($"../../resources/{product.Image}")));
+            }
+            catch
+            {
+                return new BitmapImage(new Uri(System.IO.Path.GetFullPath("../../resources/picture.png")));
+            }
+            
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return value;
+        }
+    }
+
+    [ValueConversion(typeof(Product), typeof(string))]
+    public class ConventerType : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            Product product = value as Product;
+            if (product == null)
+                return "none";
+            return $"{product.ProductType.Title} | {product.Title}";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return value;
+        }
+    }
+
+    [ValueConversion(typeof(Product), typeof(string))]
+    public class ConventerArticle : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            Product product = value as Product;
+            if (product == null)
+                return "none";
+            return $"арт. {product.ArticleNumber}";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return value;
+        }
+    }
+
+    [ValueConversion(typeof(Product), typeof(string))]
+    public class ConventerMaterial : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            Product product = value as Product;
+            if (product == null)
+                return "none";
+            string output = string.Empty;
+            foreach (string material in product.ProductMaterial.Select(p => p.Material.Title).ToList())
+                output += $"{material}; ";
+            return $"{output}";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return value;
+        }
+    }
+
+    [ValueConversion(typeof(Product), typeof(string))]
+    public class ConventerCost : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            Product product = value as Product;
+            if (product == null)
+                return "none";
+            return $"{product.MinCostForAgent}";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return value;
+        }
+    }
+}
+
+
+
+8)добавить в мэйнвиндов ксамл ссылку на пространство имен конвертера (alt+enter по синенькому тексту в мэйнвиндов ксамл, добавить пространство имен)
+9)правый клик по названию проекта справа(по своей фамилии) и пересобрать проект
